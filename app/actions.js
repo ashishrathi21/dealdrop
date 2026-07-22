@@ -1,9 +1,9 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
-// import { scrapeProduct } from "@/lib/firecrawl";
-// import { revalidatePath } from "next/cache";
-// import { redirect } from "next/navigation";
+import { scrapeProduct } from "@/lib/firecrawl";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 export async function addProduct(formData) {
   const url = formData.get("url");

@@ -1,4 +1,5 @@
 
+import { Toaster } from "sonner";
 import "./globals.css";
 
 export const metadata = {
@@ -11,7 +12,9 @@ export default function RootLayout({ children }) {
     <html
       lang="en"
     >
-      <body>{children}</body>
+      <body>{children}
+        <Toaster richColors/>
+      </body>
     </html>
   );
 }
