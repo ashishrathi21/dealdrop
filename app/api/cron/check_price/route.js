@@ -66,24 +66,39 @@ export async function POST(request) {
 
           results.priceChanges++;
 
-          if (newPrice < oldPrice) {
-            const {
-              data: { user },
-            } = await supabase.auth.admin.getUserById(product.user_id);
+          /* ===================== TEMP EMAIL TEST START ===================== */
+/* Remove this block after testing */
 
-            if (user?.email) {
-              const emailResult = await sendPriceDropAlert(
-                user.email,
-                product,
-                oldPrice,
-                newPrice
-              );
+console.log("🧪 Testing email...");
 
-              if (emailResult.success) {
-                results.alertsSent++;
-              }
-            }
-          }
+const {
+  data: { user },
+} = await supabase.auth.admin.getUserById(product.user_id);
+
+console.log("User:", user);
+console.log("Email:", user?.email);
+
+if (user?.email) {
+  const emailResult = await sendPriceDropAlert(
+    user.email,
+    product,
+    oldPrice,
+    newPrice
+  );
+
+  console.log("Email Result:", emailResult);
+
+  if (emailResult.success) {
+    console.log("✅ Email sent successfully");
+    results.alertsSent++;
+  } else {
+    console.log("❌ Email failed", emailResult);
+  }
+} else {
+  console.log("❌ User email not found");
+}
+
+/* ====================== TEMP EMAIL TEST END ====================== */
         }
 
         results.updated++;
@@ -109,3 +124,5 @@ export async function GET() {
     message: "Price check endpoint is working. Use POST to trigger.",
   });
 } 
+
+// curl.exe -X POST https://trackdealdrop.vercel.app/api/cron/check_price -H "Authorization: Bearer 9248a2b4068016d61c0dabbda4776fb4b3351b258f78abb61823cfad595b1752"
