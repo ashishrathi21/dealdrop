@@ -22,18 +22,125 @@
 
 ## 🏗️ Technical Architecture
 
+### 1. System Components & Integrations
+
+The architecture comprises the Next.js frontend clients communicating via Server Actions to Supabase and Scraping APIs, alongside a separate cron-triggered routine running on the server.
+
 ```mermaid
 graph TD
-    Client[Client App Router / UI] -->|Auth & Read/Write| Supabase[Supabase Database & Auth]
-    Client -->|Server Actions| ServerActions[Next.js Server Actions]
-    ServerActions -->|Web Scraping API| Firecrawl[Firecrawl JSON Extraction API]
-    ServerActions -->|Persist Data| Supabase
-    CronRoute[Automated Cron Endpoint / POST] -->|Fetch Products| Supabase
-    CronRoute -->|Scrape Current Price| Firecrawl
-    CronRoute -->|Detect Price Drop| EmailService[Email Alert Service]
-    EmailService -->|Send Email| Resend[Resend SMTP/API]
-    Resend -->|Notify| EndUser[E-mail Inbox]
+    subgraph Frontend [Next.js App Router - Client Layer]
+        UI[UI Components / landing page]
+        Charts[Recharts Engine]
+        Forms[Add/Delete Product Forms]
+    end
+
+    subgraph Backend [Next.js App Router - Server Layer]
+        Actions[Server Actions - actions.js]
+        CronJob[Cron Route - POST /api/cron/check_price]
+    end
+
+    subgraph Services [External Integration Services]
+        Firecrawl[Firecrawl Scraper API]
+        Resend[Resend Email API]
+    end
+
+    subgraph Database [Database & Auth Layer]
+        S_Auth[Supabase Auth]
+        S_DB[(Supabase PostgreSQL)]
+    end
+
+    %% Connections
+    UI -->|Render History| Charts
+    Forms -->|Trigger| Actions
+    Actions -->|Scrape Request| Firecrawl
+    Actions -->|Query/Mutate| S_DB
+    UI -->|Auth Check| S_Auth
+    
+    CronJob -->|Service Role Query| S_DB
+    CronJob -->|Periodic Scrape| Firecrawl
+    CronJob -->|Trigger Email Alert| Resend
+    Resend -->|Delivery| UserMail([User Email Inbox])
 ```
+
+---
+
+### 2. Product Insertion Flow
+When a user submits a product URL to track:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as User Browser
+    participant SA as Server Action (addProduct)
+    participant FC as Firecrawl Scraper
+    participant DB as Supabase DB
+
+    User->>SA: Submit URL (Form Data)
+    critical Authenticate User
+        SA->>DB: Verify JWT token & getUser()
+        DB-->>SA: User Authenticated
+    end
+    SA->>FC: Scrape URL (request JSON output matching schema)
+    FC-->>SA: Return product details & current price
+    
+    rect rgb(240, 248, 255)
+        note right of SA: Upsert product (onConflict user_id, url)
+        SA->>DB: Upsert into 'products' table
+        DB-->>SA: Product record created/updated
+    end
+    
+    alt If new product OR price changed
+        SA->>DB: Insert record into 'price_history'
+    end
+    
+    SA-->>User: Success response & Revalidate client view
+```
+
+---
+
+### 3. Periodic Cron Job Flow (Price Checking & Alerts)
+Automated task triggered by a scheduler (e.g., Vercel Cron, GitHub Actions, or local curl):
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Scheduler as Cron Scheduler
+    participant API as POST /api/cron/check_price
+    participant DB as Supabase DB
+    participant FC as Firecrawl Scraper
+    participant Resend as Resend Email Service
+
+    Scheduler->>API: POST with Bearer CRON_SECRET
+    API->>DB: Fetch all products (using Service Role)
+    DB-->>API: List of tracked products
+    
+    loop Process Batch (Size: 5 concurrent requests)
+        API->>FC: Scrape product URL
+        FC-->>API: Return latest price & details
+        API->>DB: Update 'products' table (current_price)
+        
+        alt Price Changed
+            API->>DB: Insert into 'price_history'
+        end
+
+        alt Price Dropped (New Price < Old Price)
+            API->>DB: Fetch user email by product.user_id (auth.admin)
+            DB-->>API: User email address
+            API->>Resend: sendPriceDropAlert(userEmail, product, oldPrice, newPrice)
+            Resend-->>API: Send confirmation status
+        end
+    end
+    
+    API-->>Scheduler: Return summary results (Total processed, changed, alerts sent)
+```
+
+---
+
+### 4. Security Architecture & RLS Model
+*   **Row-Level Security (RLS)**: Enforced directly on the PostgreSQL level to guarantee tenant isolation.
+    *   All queries (SELECT, INSERT, UPDATE, and DELETE) on the `products` table check `auth.uid() = user_id`.
+    *   For the `price_history` table, queries check that the related product belongs to the authenticated user using `exists (select 1 from products where id = product_id and user_id = auth.uid())`.
+*   **Bypassing RLS Securely**: The Cron job API endpoint bypasses RLS by using Supabase’s admin **Service Role Key** so it can query all products from all users simultaneously. This API endpoint is protected by a strong bearer token (`CRON_SECRET`) and will reject any request without it.
 
 ---
 
@@ -52,18 +159,52 @@ graph TD
 
 ```
 dealdrop/
-├── app/                  # Next.js App Router folders
-│   ├── actions.js        # Server Actions (CRUD, Auth redirects)
-│   ├── api/cron/         # Background cron routes (Price checking logic)
-│   └── page.jsx          # Dashboard root loader & landing router
-├── components/           # Reusable UI React Components
-│   ├── ui/               # Base UI components (Buttons, Cards, Inputs)
-│   ├── AddProductForm.jsx# Tracking input panel
-│   ├── Dashboard.jsx     # Main user workspace & analytics
-│   ├── LandingPage.jsx   # Marketing page & call to actions
-│   └── PriceChart.jsx    # Interactive SVG line graphs (Recharts)
-├── lib/                  # Library configurations (Firecrawl, Resend, Email HTML)
-└── utils/supabase/       # Server, client & middleware client creators
+├── app/                              # Next.js App Router root directory
+│   ├── api/                          # Backend API endpoints
+│   │   └── cron/
+│   │       └── check_price/
+│   │           └── route.js          # Scheduled price checking logic (POST) & test trigger (GET)
+│   ├── auth/                         # Authentication callback routes
+│   │   └── callback/
+│   │       └── route.js              # Handles post-OAuth code exchange to cookies
+│   ├── actions.js                    # Server Actions containing secure database mutations (addProduct, deleteProduct, getProducts, signOut)
+│   ├── globals.css                   # Custom global style utilities and Tailwind imports
+│   ├── layout.js                     # HTML document template structure wrapping children
+│   └── page.jsx                      # Route page handler. Switches view between LandingPage and Dashboard depending on session
+├── components/                       # Client & Server React components
+│   ├── ui/                           # Base UI primitives generated by Shadcn CLI
+│   │   ├── badge.jsx                 # Status tags and discount indicators
+│   │   ├── button.jsx                # Themeable button layouts
+│   │   ├── card.jsx                  # Standard containers used across the dashboard
+│   │   ├── dialog.jsx                # Overlay modals for user workflows
+│   │   └── input.jsx                 # Text fields for forms
+│   ├── AddProductForm.jsx            # Form component requesting product URLs with error tracking
+│   ├── AuthButton.jsx                # Login/Sign out switch buttons
+│   ├── AuthModal.js                  # Login/Signup forms connected to Supabase
+│   ├── Dashboard.jsx                 # Dashboard workspace showing cards, general stats, and historical charts
+│   ├── DashboardChart.jsx            # Aggregated user savings/tracking chart visualizer
+│   ├── LandingPage.jsx               # Landing page with CTA, reviews, and FAQ accordion
+│   ├── PriceChart.jsx                # Embedded line chart visualizer (Recharts) in each ProductCard
+│   ├── ProductCard.jsx               # Cards showing image, price, store type, and actions (Delete/Expand charts)
+│   ├── ThemeProvider.jsx             # React context provider for client-side styling themes
+│   └── ThemeToggle.jsx               # Light/Dark mode header toggle switch
+├── lib/                              # Helper libraries and module initializations
+│   ├── email.js                      # Email compilation templates and Resend client dispatch actions
+│   ├── firecrawl.js                  # Firecrawl scrapers with explicit JSON extract templates
+│   └── utils.js                      # Class name merge utilities (clsx & tailwind-merge)
+├── public/                           # Static assets served directly (icons, logo images, banner pictures)
+├── utils/                            # Shared utilities and configurations
+│   └── supabase/                     # Supabase JS SDK clients configurations
+│       ├── client.js                 # Client-side component DB client
+│       ├── middleware.js             # Next.js request middleware to check user authentication session
+│       └── server.js                 # Server actions/API route DB client containing server cookies access
+├── components.json                   # Configurations for Shadcn UI components
+├── eslint.config.mjs                 # Linters configurations
+├── jsconfig.json                     # JS path alias mapping (e.g. @/* mappings to directory roots)
+├── next.config.mjs                   # Next.js configuration rules (e.g. allowing third-party product image domains)
+├── package.json                      # Scripts, devDependencies, and dependencies versions lists
+├── postcss.config.mjs                # PostCSS rules for Tailwind CSS compilations
+└── proxy.js                          # Local environment forwarding proxy
 ```
 
 ---
@@ -149,6 +290,39 @@ create policy "Users can delete price history of their own products"
       and products.user_id = auth.uid()
     )
   );
+```
+
+### Relational Schema Diagram (ERD)
+
+```mermaid
+erDiagram
+    users ||--o{ products : "tracks"
+    products ||--o{ price_history : "has historical logs"
+
+    users {
+        uuid id PK
+        string email
+    }
+
+    products {
+        uuid id PK
+        uuid user_id FK "References auth.users"
+        text url "Unique with user_id"
+        text name
+        numeric current_price
+        text currency
+        text image_url
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    price_history {
+        uuid id PK
+        uuid product_id FK "References products"
+        numeric price
+        text currency
+        timestamp checked_at
+    }
 ```
 
 ---
