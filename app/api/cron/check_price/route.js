@@ -37,78 +37,84 @@ export async function POST(request) {
       alertsSent: 0,
     };
 
-    for (const product of products) {
-      try {
-        let newPrice, oldPrice, productData;
+    const BATCH_SIZE = 5;
+    for (let i = 0; i < products.length; i += BATCH_SIZE) {
+      const batch = products.slice(i, i + BATCH_SIZE);
+      await Promise.all(
+        batch.map(async (product) => {
+          try {
+            let newPrice, oldPrice, productData;
 
-        if (isTest) {
-          newPrice = parseFloat(product.current_price);
-          oldPrice = newPrice + 10; // Simulate a price drop
-          productData = {
-            productName: product.name,
-            currentPrice: newPrice,
-            currencyCode: product.currency,
-            productImageUrl: product.image_url,
-          };
-        } else {
-          productData = await scrapeProduct(product.url);
+            if (isTest) {
+              newPrice = parseFloat(product.current_price);
+              oldPrice = newPrice + 10; // Simulate a price drop
+              productData = {
+                productName: product.name,
+                currentPrice: newPrice,
+                currencyCode: product.currency,
+                productImageUrl: product.image_url,
+              };
+            } else {
+              productData = await scrapeProduct(product.url);
 
-          if (!productData.currentPrice) {
-            results.failed++;
-            continue;
-          }
+              if (!productData.currentPrice) {
+                results.failed++;
+                return;
+              }
 
-          newPrice = parseFloat(productData.currentPrice);
-          oldPrice = parseFloat(product.current_price);
+              newPrice = parseFloat(productData.currentPrice);
+              oldPrice = parseFloat(product.current_price);
 
-          await supabase
-            .from("products")
-            .update({
-              current_price: newPrice,
-              currency: productData.currencyCode || product.currency,
-              name: productData.productName || product.name,
-              image_url: productData.productImageUrl || product.image_url,
-              updated_at: new Date().toISOString(),
-            })
-            .eq("id", product.id);
-        }
+              await supabase
+                .from("products")
+                .update({
+                  current_price: newPrice,
+                  currency: productData.currencyCode || product.currency,
+                  name: productData.productName || product.name,
+                  image_url: productData.productImageUrl || product.image_url,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq("id", product.id);
+            }
 
-        if (isTest || oldPrice !== newPrice) {
-          if (!isTest) {
-            await supabase.from("price_history").insert({
-              product_id: product.id,
-              price: newPrice,
-              currency: productData.currencyCode || product.currency,
-            });
-          }
+            if (isTest || oldPrice !== newPrice) {
+              if (!isTest) {
+                await supabase.from("price_history").insert({
+                  product_id: product.id,
+                  price: newPrice,
+                  currency: productData.currencyCode || product.currency,
+                });
+              }
 
-          results.priceChanges++;
+              results.priceChanges++;
 
-          if (newPrice < oldPrice) {
-            const {
-              data: { user },
-            } = await supabase.auth.admin.getUserById(product.user_id);
+              if (newPrice < oldPrice) {
+                const {
+                  data: { user },
+                } = await supabase.auth.admin.getUserById(product.user_id);
 
-            if (user?.email) {
-              const emailResult = await sendPriceDropAlert(
-                user.email,
-                product,
-                oldPrice,
-                newPrice
-              );
+                if (user?.email) {
+                  const emailResult = await sendPriceDropAlert(
+                    user.email,
+                    product,
+                    oldPrice,
+                    newPrice
+                  );
 
-              if (emailResult.success) {
-                results.alertsSent++;
+                  if (emailResult.success) {
+                    results.alertsSent++;
+                  }
+                }
               }
             }
-          }
-        }
 
-        results.updated++;
-      } catch (error) {
-        console.error(`Error processing product ${product.id}:`, error);
-        results.failed++;
-      }
+            results.updated++;
+          } catch (error) {
+            console.error(`Error processing product ${product.id}:`, error);
+            results.failed++;
+          }
+        })
+      );
     }
 
     return NextResponse.json({
