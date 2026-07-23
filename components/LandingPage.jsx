@@ -90,7 +90,7 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative pt-24 pb-20 px-6 max-w-7xl mx-auto flex flex-col items-center text-center">
+      <section className="relative pt-15 pb-20 px-6 max-w-7xl mx-auto flex flex-col items-center text-center">
         
         {/* API Support Badge */}
         <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-violet-500/20 bg-violet-550/5 dark:bg-violet-950/20 text-violet-600 dark:text-violet-300 text-xs font-semibold mb-8 backdrop-blur-sm">
@@ -104,12 +104,12 @@ export default function LandingPage() {
         </h1>
 
         {/* Description */}
-        <p className="text-zinc-500 dark:text-gray-400 text-lg sm:text-xl max-w-2xl leading-relaxed mb-10">
+        <p className="text-zinc-500 dark:text-gray-400 text-md sm:text-lg max-w-2xl leading-relaxed mb-10">
           Track products from your favorite online stores and receive instant email alerts when prices fall. The smartest way to save money while shopping.
         </p>
 
         {/* Hero CTA */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-20 z-10">
+        <div className="flex flex-col sm:flex-row gap-4 mb-8 z-10">
           <button 
             onClick={() => setShowAuthModal(true)}
             className="px-8 py-3.5 bg-violet-600 hover:bg-violet-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-violet-600/20 flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
