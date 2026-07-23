@@ -4,8 +4,6 @@ import { scrapeProduct } from "@/lib/firecrawl";
 import { sendPriceDropAlert } from "@/lib/email";
 
 export async function POST(request) {
-  console.log("🚀 CRON ROUTE HIT");
-throw new Error("TEST");
   try {
     const authHeader = request.headers.get("authorization");
     const cronSecret = process.env.CRON_SECRET;
@@ -14,110 +12,37 @@ throw new Error("TEST");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Use service role to bypass RLS
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
+    // ================= TEMP RESEND TEST START =================
+    // Remove this entire block after testing
+
+    const emailResult = await sendPriceDropAlert(
+      "YOUR_EMAIL@gmail.com", // <-- Apna email yaha likh
+      {
+        name: "DealDrop Test Product",
+        image_url: "https://via.placeholder.com/300",
+        url: "https://example.com/product",
+        currency: "₹",
+      },
+      25000,
+      19999
     );
 
-    const { data: products, error: productsError } = await supabase
-      .from("products")
-      .select("*");
+    console.log("📧 Email Result:", emailResult);
 
-    if (productsError) throw productsError;
+    return NextResponse.json(emailResult);
 
-    console.log(`Found ${products.length} products to check`);
+    // ================= TEMP RESEND TEST END =================
 
-    const results = {
-      total: products.length,
-      updated: 0,
-      failed: 0,
-      priceChanges: 0,
-      alertsSent: 0,
-    };
-
-    for (const product of products) {
-      try {
-        const productData = await scrapeProduct(product.url);
-
-        if (!productData.currentPrice) {
-          results.failed++;
-          continue;
-        }
-
-        const newPrice = parseFloat(productData.currentPrice);
-        const oldPrice = parseFloat(product.current_price);
-
-        await supabase
-          .from("products")
-          .update({
-            current_price: newPrice,
-            currency: productData.currencyCode || product.currency,
-            name: productData.productName || product.name,
-            image_url: productData.productImageUrl || product.image_url,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", product.id);
-
-        if (oldPrice !== newPrice) {
-          await supabase.from("price_history").insert({
-            product_id: product.id,
-            price: newPrice,
-            currency: productData.currencyCode || product.currency,
-          });
-
-          results.priceChanges++;
-
-          /* ===================== TEMP EMAIL TEST START ===================== */
-/* Remove this block after testing */
-
-console.log("🧪 Testing email...");
-
-const {
-  data: { user },
-} = await supabase.auth.admin.getUserById(product.user_id);
-
-console.log("User:", user);
-console.log("Email:", user?.email);
-
-if (user?.email) {
-  const emailResult = await sendPriceDropAlert(
-    user.email,
-    product,
-    oldPrice,
-    newPrice
-  );
-
-  console.log("Email Result:", emailResult);
-
-  if (emailResult.success) {
-    console.log("✅ Email sent successfully");
-    results.alertsSent++;
-  } else {
-    console.log("❌ Email failed", emailResult);
-  }
-} else {
-  console.log("❌ User email not found");
-}
-
-/* ====================== TEMP EMAIL TEST END ====================== */
-        }
-
-        results.updated++;
-      } catch (error) {
-        console.error(`Error processing product ${product.id}:`, error);
-        results.failed++;
-      }
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: "Price check completed",
-      results,
-    });
   } catch (error) {
     console.error("Cron job error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message,
+      },
+      { status: 500 }
+    );
   }
 }
 
