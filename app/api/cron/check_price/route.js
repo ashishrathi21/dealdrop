@@ -18,13 +18,16 @@ export async function POST(request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
+    const { searchParams } = new URL(request.url);
+    const isTest = searchParams.get("test") === "true";
+
     const { data: products, error: productsError } = await supabase
       .from("products")
       .select("*");
 
     if (productsError) throw productsError;
 
-    console.log(`Found ${products.length} products to check`);
+    console.log(`Found ${products.length} products to check${isTest ? " (TEST MODE)" : ""}`);
 
     const results = {
       total: products.length,
@@ -36,33 +39,48 @@ export async function POST(request) {
 
     for (const product of products) {
       try {
-        const productData = await scrapeProduct(product.url);
+        let newPrice, oldPrice, productData;
 
-        if (!productData.currentPrice) {
-          results.failed++;
-          continue;
+        if (isTest) {
+          newPrice = parseFloat(product.current_price);
+          oldPrice = newPrice + 10; // Simulate a price drop
+          productData = {
+            productName: product.name,
+            currentPrice: newPrice,
+            currencyCode: product.currency,
+            productImageUrl: product.image_url,
+          };
+        } else {
+          productData = await scrapeProduct(product.url);
+
+          if (!productData.currentPrice) {
+            results.failed++;
+            continue;
+          }
+
+          newPrice = parseFloat(productData.currentPrice);
+          oldPrice = parseFloat(product.current_price);
+
+          await supabase
+            .from("products")
+            .update({
+              current_price: newPrice,
+              currency: productData.currencyCode || product.currency,
+              name: productData.productName || product.name,
+              image_url: productData.productImageUrl || product.image_url,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", product.id);
         }
 
-        const newPrice = parseFloat(productData.currentPrice);
-        const oldPrice = parseFloat(product.current_price);
-
-        await supabase
-          .from("products")
-          .update({
-            current_price: newPrice,
-            currency: productData.currencyCode || product.currency,
-            name: productData.productName || product.name,
-            image_url: productData.productImageUrl || product.image_url,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", product.id);
-
-        if (oldPrice !== newPrice) {
-          await supabase.from("price_history").insert({
-            product_id: product.id,
-            price: newPrice,
-            currency: productData.currencyCode || product.currency,
-          });
+        if (isTest || oldPrice !== newPrice) {
+          if (!isTest) {
+            await supabase.from("price_history").insert({
+              product_id: product.id,
+              price: newPrice,
+              currency: productData.currencyCode || product.currency,
+            });
+          }
 
           results.priceChanges++;
 
@@ -95,7 +113,7 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      message: "Price check completed",
+      message: isTest ? "Price check completed (Test Mode)" : "Price check completed",
       results,
     });
   } catch (error) {
