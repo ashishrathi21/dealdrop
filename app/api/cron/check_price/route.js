@@ -4,6 +4,8 @@ import { scrapeProduct } from "@/lib/firecrawl";
 import { sendPriceDropAlert } from "@/lib/email";
 
 export async function POST(request) {
+  console.log("🚀 CRON ROUTE HIT");
+throw new Error("TEST");
   try {
     const authHeader = request.headers.get("authorization");
     const cronSecret = process.env.CRON_SECRET;
