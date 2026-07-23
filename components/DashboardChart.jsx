@@ -58,7 +58,7 @@ export default function DashboardChart({ products = [], priceHistory = [] }) {
 
   return (
     <div className="w-full h-full min-h-[250px]">
-      <ResponsiveContainer width="100%" height={240}>
+      <ResponsiveContainer width="99%" height={240}>
         <LineChart data={chartData} margin={{ top: 15, right: 15, left: -10, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(0, 0, 0, 0.05)" vertical={false} />
           <XAxis 

@@ -189,10 +189,10 @@ export default function Dashboard({ user, products = [], priceHistory = [] }) {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 md:pl-64 min-h-screen bg-background flex flex-col overflow-y-auto">
+      <main className="flex-1 md:pl-64 min-h-screen bg-background flex flex-col overflow-y-auto min-w-0">
         
-        {/* Dynamic Inner views (Full-width containers without max-w constraint) */}
-        <div className="flex-1 p-6 md:p-8 w-full">
+        {/* Dynamic Inner views (Constrained layout width to prevent infinite stretching) */}
+        <div className="flex-1 p-6 md:p-8 max-w-7xl mx-auto w-full min-w-0">
           
           {activeTab === "dashboard" ? (
             <>
@@ -217,9 +217,9 @@ export default function Dashboard({ user, products = [], priceHistory = [] }) {
               </div>
 
               {/* Stats Grid - Less Rounding */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 w-full min-w-0">
                 {/* Stat 1 */}
-                <div className="bg-card border border-border p-5 rounded-xl shadow-sm hover:border-violet-500/10 transition-colors">
+                <div className="bg-card border border-border p-4 sm:p-5 rounded-xl shadow-sm hover:border-violet-500/10 transition-colors">
                   <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Total Products</span>
                   <div className="flex items-baseline gap-2 mt-2">
                     <span className="text-2xl font-extrabold text-zinc-900">{stats.totalProducts}</span>
@@ -228,7 +228,7 @@ export default function Dashboard({ user, products = [], priceHistory = [] }) {
                 </div>
 
                 {/* Stat 2 */}
-                <div className="bg-card border border-border p-5 rounded-xl shadow-sm hover:border-violet-500/10 transition-colors">
+                <div className="bg-card border border-border p-4 sm:p-5 rounded-xl shadow-sm hover:border-violet-500/10 transition-colors">
                   <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Active Alerts</span>
                   <div className="flex items-baseline gap-2 mt-2">
                     <span className="text-2xl font-extrabold text-zinc-900">{stats.activeAlerts}</span>
@@ -237,7 +237,7 @@ export default function Dashboard({ user, products = [], priceHistory = [] }) {
                 </div>
 
                 {/* Stat 3 */}
-                <div className="bg-card border border-border p-5 rounded-xl shadow-sm hover:border-violet-500/10 transition-colors">
+                <div className="bg-card border border-border p-4 sm:p-5 rounded-xl shadow-sm hover:border-violet-500/10 transition-colors">
                   <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Price Drops</span>
                   <div className="flex items-baseline gap-2 mt-2">
                     <span className="text-2xl font-extrabold text-zinc-900">{stats.priceDropsCount}</span>
@@ -246,7 +246,7 @@ export default function Dashboard({ user, products = [], priceHistory = [] }) {
                 </div>
 
                 {/* Stat 4 */}
-                <div className="bg-card border border-border p-5 rounded-xl shadow-sm hover:border-violet-500/10 transition-colors">
+                <div className="bg-card border border-border p-4 sm:p-5 rounded-xl shadow-sm hover:border-violet-500/10 transition-colors">
                   <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block">Money Saved</span>
                   <div className="flex items-baseline gap-2 mt-2">
                     <span className="text-2xl font-extrabold text-violet-650">₹{stats.totalSaved.toLocaleString()}</span>
@@ -256,9 +256,9 @@ export default function Dashboard({ user, products = [], priceHistory = [] }) {
               </div>
 
               {/* Dynamic Rows */}
-              <div className="grid lg:grid-cols-3 gap-8 mb-8">
+              <div className="grid lg:grid-cols-3 gap-6 sm:gap-8 mb-8 w-full min-w-0">
                 {/* Left Column: Price Trends */}
-                <div className="lg:col-span-2 bg-card border border-border p-6 rounded-xl shadow-sm">
+                <div className="lg:col-span-2 bg-card border border-border p-4 sm:p-6 rounded-xl shadow-sm min-w-0 w-full overflow-hidden">
                   <div className="flex items-center justify-between mb-6">
                     <div>
                       <h4 className="text-base font-bold text-zinc-900">Price Trends</h4>
@@ -269,7 +269,7 @@ export default function Dashboard({ user, products = [], priceHistory = [] }) {
                 </div>
 
                 {/* Right Column: Recent Activity */}
-                <div className="bg-card border border-border p-6 rounded-xl shadow-sm flex flex-col justify-between">
+                <div className="bg-card border border-border p-4 sm:p-6 rounded-xl shadow-sm flex flex-col justify-between min-w-0 w-full overflow-hidden">
                   <div>
                     <h4 className="text-base font-bold text-zinc-900 mb-6">Recent Activity</h4>
                     <div className="space-y-4">

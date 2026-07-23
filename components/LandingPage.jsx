@@ -61,7 +61,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-2 cursor-pointer">
-            <img src="/logo-2.png" alt="DealDrop Logo" className="h-12 w-full" />
+            <img src="/logo-2.png" alt="DealDrop Logo" className="h-10 sm:h-12 w-auto shrink-0" />
           </div>
 
           {/* Navigation */}
@@ -72,16 +72,16 @@ export default function LandingPage() {
           </nav>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button 
               onClick={() => setShowAuthModal(true)} 
-              className="text-sm font-medium text-zinc-500 hover:text-zinc-900 dark:text-gray-300 dark:hover:text-white transition-colors px-3 py-1.5"
+              className="text-xs sm:text-sm font-medium text-zinc-500 hover:text-zinc-900 dark:text-gray-300 dark:hover:text-white transition-colors px-2 py-1.5"
             >
               Log in
             </button>
             <button 
               onClick={() => setShowAuthModal(true)} 
-              className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all shadow-lg shadow-violet-600/15 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+              className="bg-violet-600 hover:bg-violet-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-lg shadow-violet-600/15 hover:scale-[1.02] active:scale-[0.98] cursor-pointer whitespace-nowrap"
             >
               Get Started
             </button>
@@ -133,8 +133,8 @@ export default function LandingPage() {
               <div className="font-mono">Dashboard Preview</div>
             </div>
             {/* Mockup Content */}
-            <div className="p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-6 text-left">
-              <div className="w-24 h-24 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-border dark:border-white/5 overflow-hidden flex items-center justify-center shrink-0">
+            <div className="p-4 sm:p-8 flex items-start gap-4 sm:gap-6 text-left">
+              <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-lg sm:rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-border dark:border-white/5 overflow-hidden flex items-center justify-center shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
                   src="https://images.unsplash.com/photo-1612858249937-1cc0852093dd?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MjB8fHdpcmVsZXNzJTIwaGVhZHBob25lc3xlbnwwfHwwfHx8MA%3D%3D" 
@@ -142,24 +142,24 @@ export default function LandingPage() {
                   className="w-full h-full object-cover"
                 />
               </div>
-              <div className="flex-1">
-                <h3 className="text-zinc-900 dark:text-white font-bold text-lg sm:text-xl leading-snug mb-1">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-zinc-900 dark:text-white font-bold text-sm sm:text-xl leading-snug mb-1 truncate">
                   Sony WH-1000XM5 Wireless Headphones
                 </h3>
-                <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-gray-400">
+                <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-sm text-zinc-500 dark:text-gray-400">
                   <span>Amazon</span>
                   <span className="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
                   <span className="text-violet-600 dark:text-violet-400 flex items-center gap-1 font-medium">
-                    <span className="w-1.5 h-1.5 rounded-full bg-violet-650 dark:bg-violet-500 animate-pulse" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-violet-600 dark:bg-violet-500 animate-pulse" />
                     Monitoring Live
                   </span>
                 </div>
               </div>
-              <div className="sm:text-right shrink-0 mt-4 sm:mt-0">
-                <div className="text-zinc-900 dark:text-white font-extrabold text-2xl sm:text-3xl tracking-tight">₹26,990</div>
-                <div className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-xs font-semibold mt-1 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-md">
-                  <TrendingDown className="w-3.5 h-3.5" />
-                  30% Drop detected
+              <div className="text-right shrink-0 flex flex-col items-end pl-2">
+                <div className="text-zinc-900 dark:text-white font-extrabold text-base sm:text-3xl tracking-tight">₹26,990</div>
+                <div className="inline-flex items-center gap-0.5 sm:gap-1 text-emerald-600 dark:text-emerald-400 text-[10px] sm:text-xs font-semibold mt-1 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">
+                  <TrendingDown className="w-3 h-3" />
+                  30% Drop
                 </div>
               </div>
             </div>
