@@ -52,28 +52,29 @@ export default function PriceChart({ productId }) {
 
   return (
     <div className="w-full">
-      <h4 className="text-sm font-semibold mb-4 text-gray-700">
+      <h4 className="text-sm font-bold mb-4 text-zinc-500">
         Price History
       </h4>
       <ResponsiveContainer width="100%" height={200}>
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-          <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="#9ca3af" />
-          <YAxis tick={{ fontSize: 12 }} stroke="#9ca3af" />
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(0, 0, 0, 0.05)" />
+          <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="#6b7280" />
+          <YAxis tick={{ fontSize: 11 }} stroke="#6b7280" />
           <Tooltip
             contentStyle={{
               backgroundColor: "white",
               border: "1px solid #e5e7eb",
-              borderRadius: "6px",
+              borderRadius: "12px",
+              color: "#1f2937",
             }}
           />
           <Line
-            type="monotone"
+            type="linear"
             dataKey="price"
-            stroke="#FA5D19"
-            strokeWidth={2}
-            dot={{ fill: "#FA5D19", r: 4 }}
-            activeDot={{ r: 6 }}
+            stroke="#8B5CF6"
+            strokeWidth={3}
+            dot={{ fill: "#8B5CF6", r: 5, stroke: "white", strokeWidth: 1.5 }}
+            activeDot={{ r: 7 }}
           />
         </LineChart>
       </ResponsiveContainer>

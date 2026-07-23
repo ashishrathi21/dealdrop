@@ -38,14 +38,14 @@ const AddProductForm = ({ user }) => {
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="w-full max-w-2xl mx-auto">
-        <div className="flex flex-col sm:flex-row gap-2">
+      <form onSubmit={handleSubmit} className="w-full">
+        <div className="flex flex-col sm:flex-row gap-3">
           <Input
             type="url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="Paste product URL (Amazon, Walmart, etc.)"
-            className="h-12 text-base"
+            className="h-12 text-base bg-zinc-50 border-border text-zinc-900 placeholder-zinc-400 focus-visible:ring-violet-500/30 focus-visible:border-violet-500/50 rounded-lg"
             required
             disabled={loading}
           />
@@ -53,7 +53,7 @@ const AddProductForm = ({ user }) => {
           <Button
             type="submit"
             disabled={loading}
-            className="bg-orange-500 hover:bg-orange-600 h-10 sm:h-12 px-8"
+            className="bg-violet-600 hover:bg-violet-550 text-white h-12 px-8 rounded-lg font-semibold transition-all shadow-md shadow-violet-600/10 shrink-0 cursor-pointer"
             size="lg"
           >
             {loading ? (

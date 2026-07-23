@@ -95,6 +95,14 @@ export async function addProduct(formData) {
 export async function deleteProduct(productId) {
   try {
     const supabase = await createClient();
+
+    // First delete any price history rows referencing this product
+    await supabase
+      .from("price_history")
+      .delete()
+      .eq("product_id", productId);
+
+    // Then delete the product
     const { error } = await supabase
       .from("products")
       .delete()
@@ -105,6 +113,7 @@ export async function deleteProduct(productId) {
     revalidatePath("/");
     return { success: true };
   } catch (error) {
+    console.error("Delete product error:", error);
     return { error: error.message };
   }
 }
